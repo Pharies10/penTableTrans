@@ -1,142 +1,138 @@
-
-            
 var penpromise= d3.json("penguins/classData.json")
 
 
-var success= function(data)
-{
-    
-    var days = d3.range(38)
-    d3.select("div")
-    .selectAll("span")
-        .data(days)
-        .enter()
-        .append("span")
-        .append("button")
-        .text(function(d) {return d})
-        .on("click", function(n){
-        
-        
-        var mapPen1= function(p,i)
-        {
-            var xPen = i
-            var yPen = p.quizes[n].grade
-    
-            return { x:xPen, y:yPen}
-    
-        }
-        
-        var quizList = data.map(mapPen1)
-        
-        
-        var xScale = makeXScale(quizList)
-        var  yScale = makeYScale(quizList)
-        makeNext(n, data)
-        makePrev(n, data)
-        drawpoints(quizList, xScale, yScale)
-        
-    })
-    
-    
-    
-    
-    makeNext(0, data)
-    makePrev(0, data)
-  
- 
-    
-    
-}
+var screen = {width:1000,height:700}
+var margins = {top:10,right:25,left:35,bottom:50}
 
-var fail=function(data)
-{
-    console.log("doesn't work")
-}
 
+
+var success = function(data)
+{
+        var newData = transformPen(data)
+        console.log(newData)
+        setup(data)
+    }
+var fail = function(data)
+    {
+        console.log("fail", data)
+    }
 penpromise.then(success,fail)
+
+//tranform the pengin
+var transformPen = function(classroom)
+{
+    var newData = classroom.map(changePen)
+    return newData
+}
+
+var changePen = function(penguin)
+{
+    var quizList = penguin.quizes.map(getGrade)
+    penguin.quizGrades = quizList
+    return penguin
+}
+
+var getGrade = function(quiz)
+{
+    return quiz.grade
+}
+
+
+var setup = function(data)
+{
+    
+    var pen = d3.range(0,23)
+    
+
+    d3.select("svg")
+      .attr("width",screen.width)
+      .attr("height",screen.height)
+      .append("g")
+      .attr("id","graph")
+      .attr("transform","translate("+margins.left+","+margins.top+")");
+    
+    var width = screen.width - margins.left - margins.right;
+    var height = screen.height - margins.top - margins.bottom;
+
+    var xScale = d3.scaleLinear()
+                   .domain([0,38])
+                   .range([0,width])
+    var yScale = d3.scaleLinear()
+                    .domain([0,10])
+                    .range([height,0])
+    var xAxis = d3.axisBottom(xScale)
+    var yAxis = d3.axisLeft(yScale)
+    
+    
+    d3.select("svg")
+      .append("g")
+      .classed("axis",true)
+    
+    d3.select(".axis")
+      .append("g")
+      .attr("id","xAxis")
+      .attr("transform","translate("+margins.left+","+(margins.top+height)+")")
+      .call(xAxis)
+    
+    d3.select(".axis")
+      .append("g")
+      .attr("id","yAxis")
+      .attr("transform","translate(25, "+margins.top+")")
+      .call(yAxis)
+    
+    
+    drawPoints(data, 0, xScale, yScale)
+    
+    
+    d3.select("div")
+        .selectAll("button")
+        .data(pen)
+        .enter()
+        .append("button")
+        .text(function(i){return "Penguin #"+(i+1)})
+        .on("click", function(i){
+        
+        transPoint(data, i, xScale, yScale)
+        
+    })
+    
+    
+    
+    
+    
+}
+
+var transPoint = function(data, index, xScale, yScale)
+{
+    
+    
+        var arrays = d3.select("#graph")
+        .selectAll("circle")
+        .data(data[index].quizGrades)
+        .transition()
+        .duration(500)
+        .attr("cx",function(q,i){ return xScale(i)})
+        .attr("cy",function(q){return yScale(q)})
+        .attr("r",5)
+        .style("fill", function(grade){
+            
+            
+            if(grade <= 5){
+                    return "red"
+                    
+                    
+                }
+            else{
+                return "blue"
                 
-
-
-var screen={width:800,height:600}
-
-var drawpoints=function(quizList, xScale, yScale)
-{
-    
-    d3.selectAll('svg *').remove()
-    
-    
-    d3.select('svg')
-    .attr("height",screen.height)
-    .attr("width",screen.width)
-    
- 
-    
-    d3.select('svg')
-    .selectAll("circle")
-    .data(quizList)
-    .enter()
-    .append("circle")
-    .attr("cx",function(q){return xScale(q.x)})
-    .attr("cy",function(q){return yScale(q.y)})
-    .attr("r",10)
-    
-    
-    
-    
-    
-    
-}
-
-
-
-var makeNext = function(n, data)
-{
-    
-    d3.select("#next").remove()
-    
-    d3.select("div")
-        .append("span")
-        .append("button")
-        .attr("id", "next")
-        .text("next")
-        .on("click", function(){
-        
-        if (n > 0 && n < 38) 
-        {
-        
-        var mapPen1= function(p,i)
-        {
-            console.log(p.quizes[n+1].grade)
-            var xPen = i
-            var yPen = p.quizes[n+1].grade
-    
-            return { x:xPen, y:yPen}
-    
-        
-    
-        }
-        
-        var quizList = data.map(mapPen1)
-        
-        
-        var xScale = makeXScale(quizList)
-        var  yScale = makeYScale(quizList)
-        makeNext(n+1,data)
-        makePrev(n+1,data)
-        drawpoints(quizList, xScale, yScale)
-        
+                
+            }
+            
+            
         }
         
         
-        
-        
-        
-        
-        
-    })
-    
-    
-    
+        )
     
     
     
@@ -145,55 +141,39 @@ var makeNext = function(n, data)
 
 
 
-var makePrev = function(n, data)
+var drawPoints = function(data, index, xScale, yScale)
 {
     
-    d3.select("#prev").remove()
-    d3.select("div")
-        .append("span")
-        .append("button")
-        .attr("id", "prev")
-        .text("prev")
-        .on("click", function(){
-        
-        if (n > 0 || n < 38) 
-        {
-        
-        var mapPen1= function(p,i)
-        {
-            console.log(p.quizes[n-1].grade)
-            var xPen = i
-            var yPen = p.quizes[n-1].grade
-    
-            return { x:xPen, y:yPen}
-    
-        
-    
-        }
-        
-        var quizList = data.map(mapPen1)
-        
-        
-        var xScale = makeXScale(quizList)
-        var  yScale = makeYScale(quizList)
-        makeNext(n-1,data)
-        makePrev(n-1, data)
-        drawpoints(quizList, xScale, yScale)
-        
-        
-        }
-        
-        
-        
-        
-        
-        
-        
-    })
     
     
     
-    
+    d3.selectAll("circle").remove()
+   
+    var arrays = d3.select("#graph")
+        .selectAll("circle")
+        .data(data[index].quizGrades)
+        .enter()
+        .append("circle")
+
+         .attr("cx",function(q,i){ return xScale(i)})
+        .attr("cy",function(q){return yScale(q)})
+        .attr("r",5)
+        .style("fill", function(grade){
+            
+            
+            if(grade <= 5){
+                    return "red"
+                    
+                    
+                }
+            else{
+                return "blue"
+                
+                
+            }
+            
+            
+        })
     
     
     
@@ -210,34 +190,9 @@ var makePrev = function(n, data)
 
 
 
-var makeXScale = function(data)
-{
-var xScale=d3.scaleLinear()
- xScale.domain(
- [
-     d3.min(data,function(d){return d.x}),
-     d3.max(data,function(d){return d.x})
- ]
- )
-xScale.range([0,screen.width])
-
- return xScale
-}
 
 
-var makeYScale = function(data)
-{
-var yScale=d3.scaleLinear()
- yScale.domain(
- [
-    d3.min(data,function(d){return d.y}),
-     d3.max(data,function(d){return d.y})
- ]
- )
-yScale.range([screen.height,0])
-return yScale
-    
-}
+
 
 
 
