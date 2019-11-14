@@ -84,12 +84,17 @@ var setup = function(data)
     drawPoints(data, 0, xScale, yScale)
     
     
-    d3.select("div")
+    d3.select("#btnHolder")
         .selectAll("button")
         .data(pen)
         .enter()
         .append("button")
-        .text(function(i){return "Penguin #"+(i+1)})
+        .text(function(i){
+        
+        var name = stringSplit(data[i].picture)
+        
+        
+        return name + " Penguin"})
         .on("click", function(i){
         
         transPoint(data, i, xScale, yScale)
@@ -101,7 +106,16 @@ var setup = function(data)
     
     
 }
-
+var stringSplit = function(pic)
+{
+    var stringList = pic.split("-")
+    return stringList[0]
+    
+    
+    
+    
+    
+}
 var transPoint = function(data, index, xScale, yScale)
 {
     
@@ -113,7 +127,7 @@ var transPoint = function(data, index, xScale, yScale)
         .duration(500)
         .attr("cx",function(q,i){ return xScale(i)})
         .attr("cy",function(q){return yScale(q)})
-        .attr("r",5)
+        .attr("r",7)
         .style("fill", function(grade){
             
             
@@ -154,10 +168,33 @@ var drawPoints = function(data, index, xScale, yScale)
         .data(data[index].quizGrades)
         .enter()
         .append("circle")
-
-         .attr("cx",function(q,i){ return xScale(i)})
+        .attr("cx",function(q,i){ return xScale(i)})
         .attr("cy",function(q){return yScale(q)})
-        .attr("r",5)
+        .attr("r",7)
+        .on("mouseover", function(d,i){
+            
+            d3.select(".display")
+                .append("div")
+                .classed("info", true)
+                .text("("+i+","+d+")")
+                .style("left", d3.event.pageX + "px")
+                .style("top", (d3.event.pageY-30) + "px")
+
+         
+            
+          
+            
+            
+        })
+    .on("mouseout", function(d){
+        
+        
+        d3.select(".display *").remove()
+        
+        
+        
+    })
+
         .style("fill", function(grade){
             
             
